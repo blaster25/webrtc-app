@@ -7,6 +7,10 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
+// Sliding window buffer: keeps the latest 50 messages and drops the oldest when full
+const messageHistory = [];
+const MAX_HISTORY = 50;
+
 app.use(express.static(__dirname));
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -28,6 +32,9 @@ app.get('/', (req, res) => {
 io.on('connection', (socket) => {
     console.log(`User connected: ${socket.id}`);
 
+    // Send existing message history to the newly connected user
+    socket.emit('init-history', messageHistory);
+
     // WebRTC Signaling
     socket.on('offer', (data) => {
         socket.broadcast.emit('offer', data);
@@ -41,12 +48,22 @@ io.on('connection', (socket) => {
         socket.broadcast.emit('candidate', data);
     });
 
-    // Text Chat Messaging with Username packing
+    // Text Chat Messaging with Sliding History Buffer
     socket.on('chat-message', (data) => {
-        socket.broadcast.emit('chat-message', {
+        const messagePacket = {
             username: data.username || 'Anonymous',
-            message: data.message
-        });
+            message: data.message,
+            timestamp: Date.now()
+        };
+
+        // Push new message and drop the oldest if limit is reached
+        messageHistory.push(messagePacket);
+        if (messageHistory.length > MAX_HISTORY) {
+            messageHistory.shift();
+        }
+
+        // Broadcast to everyone else
+        socket.broadcast.emit('chat-message', messagePacket);
     });
 
     socket.on('disconnect', () => {
