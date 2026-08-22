@@ -3,29 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebRTC Video Chat</title>
+    <title>WebRTC Video & Chat App</title>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; background: #f0f2f5; margin: 0; padding: 20px; }
-        h1 { color: #333; }
-        .video-container { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin-top: 20px; }
-        video { width: 100%; max-width: 450px; height: 350px; background: #000; border-radius: 8px; border: 2px solid #ccc; }
+        body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
+        video { width: 40%; max-width: 400px; margin: 10px; background: black; border: 2px solid #ccc; border-radius: 8px; }
+        #chat-container { max-width: 450px; margin: 20px auto; text-align: left; }
+        #messages { height: 150px; border: 1px solid #ccc; overflow-y: scroll; padding: 10px; margin-bottom: 10px; background: #f9f9f9; border-radius: 5px; }
+        #message-input { width: 75%; padding: 8px; }
+        #send-btn { padding: 8px 15px; }
     </style>
 </head>
 <body>
-    <h1>WebRTC Video Chat</h1>
-    <div class="video-container">
-        <div>
-            <h3>My Video</h3>
-            <video id="localVideo" autoplay playsinline muted></video>
-        </div>
-        <div>
-            <h3>Partner Video</h3>
-            <video id="remoteVideo" autoplay playsinline></video>
-        </div>
+
+    <h2>WebRTC Video Chat & Messaging</h2>
+
+    <div>
+        <video id="localVideo" autoplay playsinline muted></video>
+        <video id="remoteVideo" autoplay playsinline></video>
     </div>
 
-    <!-- Required Scripts -->
+    <div id="chat-container">
+        <div id="messages"></div>
+        <input type="text" id="message-input" placeholder="Type a message..." />
+        <button id="send-btn">Send</button>
+    </div>
+
+    <!-- Include Socket.io client script -->
     <script src="/socket.io/socket.io.js"></script>
-    <script src="/script.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
