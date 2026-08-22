@@ -24,25 +24,28 @@ async function init() {
 
 init();
 
-// --- Encrypted Text Chat Logic ---
-const passwordInput = document.getElementById('room-password');
-const messageInput = document.getElementById('message-input');
-const sendBtn = document.getElementById('send-btn');
-const messagesContainer = document.getElementById('messages');
-
-// Auto-load saved password safely
+// --- Request Browser Notification Permission on Load ---
 window.addEventListener('DOMContentLoaded', () => {
+    if ('Notification' in window && Notification.permission !== 'granted') {
+        Notification.requestPermission();
+    }
+
     try {
         const savedPassword = localStorage.getItem('webrtc_chat_password');
         if (savedPassword) {
-            passwordInput.value = savedPassword;
+            document.getElementById('room-password').value = savedPassword;
         }
     } catch (e) {
         console.log('LocalStorage restricted.');
     }
 });
 
-// Save password immediately on change
+// --- Encrypted Text Chat Logic ---
+const passwordInput = document.getElementById('room-password');
+const messageInput = document.getElementById('message-input');
+const sendBtn = document.getElementById('send-btn');
+const messagesContainer = document.getElementById('messages');
+
 passwordInput.addEventListener('input', () => {
     try {
         localStorage.setItem('webrtc_chat_password', passwordInput.value);
@@ -94,6 +97,9 @@ socket.on('chat-message', (data) => {
 
         if (decryptedText) {
             appendMessage(`${senderIp}: ${decryptedText}`);
+            
+            // Trigger browser notification if allowed and tab is backgrounded
+            showNotification(senderIp, decryptedText);
         } else {
             appendMessage(`${senderIp}: [Decryption Failed - Wrong Password]`);
         }
@@ -107,4 +113,15 @@ function appendMessage(text) {
     div.textContent = text;
     messagesContainer.appendChild(div);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+// Function to trigger native browser popup notification
+function showNotification(sender, message) {
+    if ('Notification' in window && Notification.permission === 'granted') {
+        // Only trigger if window is out of focus / backgrounded, or always notify
+        new Notification(`New Secure Message from ${sender}`, {
+            body: message,
+            icon: 'https://cdn-icons-png.flaticon.com/512/1041/1041916.png'
+        });
+    }
 }
