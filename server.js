@@ -7,10 +7,14 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// Serve static files from the current directory
+// Explicitly serve index.html at the root URL
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// Serve other static files (like script.js)
 app.use(express.static(path.join(__dirname)));
 
-// Basic socket connection for WebRTC signaling
 io.on('connection', (socket) => {
     console.log('A user connected:', socket.id);
 
