@@ -13,7 +13,7 @@
         #messages { height: 180px; border: 1px solid #ccc; overflow-y: scroll; padding: 10px; margin-bottom: 10px; background: #fafafa; border-radius: 5px; font-size: 14px; }
         .input-group { margin-bottom: 12px; }
         input { padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 5px; font-size: 14px; }
-        #room-password, #message-input { width: 100%; }
+        #username-input, #room-password, #message-input { width: 100%; }
         #send-btn { padding: 10px 15px; width: 100%; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; }
         #send-btn:hover { background-color: #0056b3; }
     </style>
@@ -23,7 +23,12 @@
     <div class="container">
         <h2>Secure Encrypted Chat</h2>
 
-        <!-- Password Input hardened against mobile auto-correct -->
+        <!-- Username Input -->
+        <div class="input-group">
+            <input type="text" id="username-input" placeholder="Enter Your Username..." autocapitalize="none" autocomplete="off" spellcheck="false" />
+        </div>
+
+        <!-- Password Input -->
         <div class="input-group">
             <input type="password" id="room-password" placeholder="Enter Shared Secret Password..." autocapitalize="none" autocomplete="off" spellcheck="false" />
         </div>
