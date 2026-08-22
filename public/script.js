@@ -24,26 +24,33 @@ async function init() {
 
 init();
 
-// --- Encrypted Text Chat Logic with Enter Key Support ---
+// --- Encrypted Text Chat Logic ---
 const passwordInput = document.getElementById('room-password');
 const messageInput = document.getElementById('message-input');
 const sendBtn = document.getElementById('send-btn');
 const messagesContainer = document.getElementById('messages');
 
-// Auto-load saved password from browser storage if it exists
+// Auto-load saved password safely
 window.addEventListener('DOMContentLoaded', () => {
-    const savedPassword = localStorage.getItem('webrtc_chat_password');
-    if (savedPassword) {
-        passwordInput.value = savedPassword;
+    try {
+        const savedPassword = localStorage.getItem('webrtc_chat_password');
+        if (savedPassword) {
+            passwordInput.value = savedPassword;
+        }
+    } catch (e) {
+        console.log('LocalStorage restricted.');
     }
 });
 
-// Save password automatically when typed
+// Save password immediately on change
 passwordInput.addEventListener('input', () => {
-    localStorage.setItem('webrtc_chat_password', passwordInput.value);
+    try {
+        localStorage.setItem('webrtc_chat_password', passwordInput.value);
+    } catch (e) {
+        console.log('Could not save to LocalStorage.');
+    }
 });
 
-// Function to handle sending the message
 function sendMessage() {
     const text = messageInput.value;
     const secretPassword = passwordInput.value;
@@ -62,13 +69,11 @@ function sendMessage() {
     messageInput.value = '';
 }
 
-// Send on button click
 sendBtn.addEventListener('click', sendMessage);
 
-// Send on pressing the 'Enter' key inside the input box
 messageInput.addEventListener('keydown', (event) => {
     if (event.key === 'Enter') {
-        event.preventDefault(); // Prevents default form submit or newline behavior
+        event.preventDefault();
         sendMessage();
     }
 });
