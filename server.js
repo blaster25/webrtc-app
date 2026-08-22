@@ -26,19 +26,16 @@ app.get('/', (req, res) => {
 });
 
 io.on('connection', (socket) => {
-    // Get client IP address (handles proxies like Render / Cloudflare / local loopback)
     let clientIp = socket.handshake.headers['x-forwarded-for'] || socket.conn.remoteAddress;
     
-    // Clean up IPv6 localhost format if necessary
     if (clientIp === '::1' || clientIp === '::ffff:127.0.0.1') {
         clientIp = '127.0.0.1';
     } else if (clientIp && clientIp.includes(',')) {
-        clientIp = clientIp.split(',')[0].trim(); // Take the first IP if proxied
+        clientIp = clientIp.split(',')[0].trim();
     }
 
     console.log(`User connected: ${socket.id} from IP: ${clientIp}`);
 
-    // WebRTC Signaling
     socket.on('offer', (data) => {
         socket.broadcast.emit('offer', data);
     });
@@ -51,7 +48,6 @@ io.on('connection', (socket) => {
         socket.broadcast.emit('candidate', data);
     });
 
-    // Text Chat Messaging with IP packing
     socket.on('chat-message', (encryptedData) => {
         socket.broadcast.emit('chat-message', {
             ip: clientIp,
