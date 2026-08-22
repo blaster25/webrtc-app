@@ -7,6 +7,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
+// Serve static files from root and public folders safely
 app.use(express.static(__dirname));
 app.use(express.static(path.join(__dirname, 'public')));
 
