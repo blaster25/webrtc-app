@@ -7,16 +7,13 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// Serve static files from both root and public folders safely
 app.use(express.static(__dirname));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Explicit route that checks both locations
 app.get('/', (req, res) => {
     const publicPath = path.join(__dirname, 'public', 'index.html');
     const rootPath = path.join(__dirname, 'index.html');
     
-    // Send public/index.html if it exists, otherwise root index.html
     res.sendFile(publicPath, (err) => {
         if (err) {
             res.sendFile(rootPath, (rootErr) => {
@@ -31,6 +28,7 @@ app.get('/', (req, res) => {
 io.on('connection', (socket) => {
     console.log('A user connected:', socket.id);
 
+    // WebRTC Signaling
     socket.on('offer', (data) => {
         socket.broadcast.emit('offer', data);
     });
@@ -41,6 +39,11 @@ io.on('connection', (socket) => {
 
     socket.on('candidate', (data) => {
         socket.broadcast.emit('candidate', data);
+    });
+
+    // Text Chat Messaging
+    socket.on('chat-message', (data) => {
+        socket.broadcast.emit('chat-message', data);
     });
 
     socket.on('disconnect', () => {
