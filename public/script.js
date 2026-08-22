@@ -25,38 +25,43 @@ async function init() {
 init();
 
 // --- Elements & Storage ---
+const usernameInput = document.getElementById('username-input');
 const passwordInput = document.getElementById('room-password');
 const messageInput = document.getElementById('message-input');
 const sendBtn = document.getElementById('send-btn');
 const messagesContainer = document.getElementById('messages');
 
 window.addEventListener('DOMContentLoaded', () => {
-    // Request notification permission safely on user interaction or load
     if ('Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
         Notification.requestPermission();
     }
 
     try {
+        const savedUsername = localStorage.getItem('webrtc_chat_username');
+        if (savedUsername) usernameInput.value = savedUsername;
+
         const savedPassword = localStorage.getItem('webrtc_chat_password');
-        if (savedPassword) {
-            passwordInput.value = savedPassword;
-        }
+        if (savedPassword) passwordInput.value = savedPassword;
     } catch (e) {
         console.log('LocalStorage restricted.');
     }
 });
 
+usernameInput.addEventListener('input', () => {
+    try {
+        localStorage.setItem('webrtc_chat_username', usernameInput.value.trim());
+    } catch (e) {}
+});
+
 passwordInput.addEventListener('input', () => {
     try {
-        // Trim unintended whitespace from mobile typing
         localStorage.setItem('webrtc_chat_password', passwordInput.value.trim());
-    } catch (e) {
-        console.log('Could not save to LocalStorage.');
-    }
+    } catch (e) {}
 });
 
 function sendMessage() {
     const text = messageInput.value;
+    const username = usernameInput.value.trim() || 'Anonymous';
     const secretPassword = passwordInput.value.trim();
 
     if (text.trim() === '') return;
@@ -69,7 +74,10 @@ function sendMessage() {
     const encryptedMessage = CryptoJS.AES.encrypt(text, secretPassword).toString();
     appendMessage('You: ' + text);
 
-    socket.emit('chat-message', encryptedMessage);
+    socket.emit('chat-message', {
+        username: username,
+        message: encryptedMessage
+    });
     messageInput.value = '';
 }
 
@@ -84,11 +92,11 @@ messageInput.addEventListener('keydown', (event) => {
 
 socket.on('chat-message', (data) => {
     const secretPassword = passwordInput.value.trim();
-    const senderIp = data.ip || 'Unknown IP';
+    const senderName = data.username || 'Anonymous';
     const encryptedData = data.message;
 
     if (!secretPassword) {
-        appendMessage(`${senderIp}: [Encrypted Message - Enter password to read]`);
+        appendMessage(`${senderName}: [Encrypted Message - Enter password to read]`);
         return;
     }
 
@@ -97,13 +105,13 @@ socket.on('chat-message', (data) => {
         const decryptedText = bytes.toString(CryptoJS.enc.Utf8);
 
         if (decryptedText) {
-            appendMessage(`${senderIp}: ${decryptedText}`);
-            showNotification(senderIp, decryptedText);
+            appendMessage(`${senderName}: ${decryptedText}`);
+            showNotification(senderName, decryptedText);
         } else {
-            appendMessage(`${senderIp}: [Decryption Failed - Wrong Password]`);
+            appendMessage(`${senderName}: [Decryption Failed - Wrong Password]`);
         }
     } catch (e) {
-        appendMessage(`${senderIp}: [Decryption Failed]`);
+        appendMessage(`${senderName}: [Decryption Failed]`);
     }
 });
 
@@ -117,15 +125,10 @@ function appendMessage(text) {
 function showNotification(sender, message) {
     if ('Notification' in window && Notification.permission === 'granted') {
         try {
-            // Mobile browsers support service worker notifications or standard notifications
-            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-                navigator.serviceWorker.controller.postMessage({ title: `Message from ${sender}`, body: message });
-            } else {
-                new Notification(`Message from ${sender}`, {
-                    body: message,
-                    icon: 'https://cdn-icons-png.flaticon.com/512/1041/1041916.png'
-                });
-            }
+            new Notification(`Message from ${sender}`, {
+                body: message,
+                icon: 'https://cdn-icons-png.flaticon.com/512/1041/1041916.png'
+            });
         } catch (err) {
             console.log('Notification error:', err);
         }
