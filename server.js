@@ -7,13 +7,26 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// Explicitly serve index.html at the root URL
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
+// Serve static files from both root and public folders safely
+app.use(express.static(__dirname));
+app.use(express.static(path.join(__dirname, 'public')));
 
-// Serve other static files (like script.js)
-app.use(express.static(path.join(__dirname)));
+// Explicit route that checks both locations
+app.get('/', (req, res) => {
+    const publicPath = path.join(__dirname, 'public', 'index.html');
+    const rootPath = path.join(__dirname, 'index.html');
+    
+    // Send public/index.html if it exists, otherwise root index.html
+    res.sendFile(publicPath, (err) => {
+        if (err) {
+            res.sendFile(rootPath, (rootErr) => {
+                if (rootErr) {
+                    res.status(404).send('index.html not found on server');
+                }
+            });
+        }
+    });
+});
 
 io.on('connection', (socket) => {
     console.log('A user connected:', socket.id);
