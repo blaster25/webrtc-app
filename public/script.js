@@ -24,7 +24,7 @@ async function init() {
 
 init();
 
-// --- Encrypted Text Chat Logic ---
+// --- Encrypted Text Chat Logic with IP Display ---
 const passwordInput = document.getElementById('room-password');
 const messageInput = document.getElementById('message-input');
 const sendBtn = document.getElementById('send-btn');
@@ -52,11 +52,13 @@ sendBtn.addEventListener('click', () => {
     messageInput.value = '';
 });
 
-socket.on('chat-message', (encryptedData) => {
+socket.on('chat-message', (data) => {
     const secretPassword = passwordInput.value;
+    const senderIp = data.ip || 'Unknown IP';
+    const encryptedData = data.message;
 
     if (!secretPassword) {
-        appendMessage('Peer: [Encrypted Message - Enter password to read]');
+        appendMessage(`${senderIp}: [Encrypted Message - Enter password to read]`);
         return;
     }
 
@@ -66,12 +68,12 @@ socket.on('chat-message', (encryptedData) => {
         const decryptedText = bytes.toString(CryptoJS.enc.Utf8);
 
         if (decryptedText) {
-            appendMessage('Peer: ' + decryptedText);
+            appendMessage(`${senderIp}: ${decryptedText}`);
         } else {
-            appendMessage('Peer: [Decryption Failed - Wrong Password]');
+            appendMessage(`${senderIp}: [Decryption Failed - Wrong Password]`);
         }
     } catch (e) {
-        appendMessage('Peer: [Decryption Failed]');
+        appendMessage(`${senderIp}: [Decryption Failed]`);
     }
 });
 
