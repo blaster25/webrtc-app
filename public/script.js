@@ -24,13 +24,27 @@ async function init() {
 
 init();
 
-// --- Encrypted Text Chat Logic with IP Display ---
+// --- Encrypted Text Chat Logic with Enter Key Support ---
 const passwordInput = document.getElementById('room-password');
 const messageInput = document.getElementById('message-input');
 const sendBtn = document.getElementById('send-btn');
 const messagesContainer = document.getElementById('messages');
 
-sendBtn.addEventListener('click', () => {
+// Auto-load saved password from browser storage if it exists
+window.addEventListener('DOMContentLoaded', () => {
+    const savedPassword = localStorage.getItem('webrtc_chat_password');
+    if (savedPassword) {
+        passwordInput.value = savedPassword;
+    }
+});
+
+// Save password automatically when typed
+passwordInput.addEventListener('input', () => {
+    localStorage.setItem('webrtc_chat_password', passwordInput.value);
+});
+
+// Function to handle sending the message
+function sendMessage() {
     const text = messageInput.value;
     const secretPassword = passwordInput.value;
 
@@ -41,15 +55,22 @@ sendBtn.addEventListener('click', () => {
         return;
     }
 
-    // Encrypt the message using AES
     const encryptedMessage = CryptoJS.AES.encrypt(text, secretPassword).toString();
-
-    // Display locally as 'You'
     appendMessage('You: ' + text);
 
-    // Send the encrypted cipher text across the server socket
     socket.emit('chat-message', encryptedMessage);
     messageInput.value = '';
+}
+
+// Send on button click
+sendBtn.addEventListener('click', sendMessage);
+
+// Send on pressing the 'Enter' key inside the input box
+messageInput.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+        event.preventDefault(); // Prevents default form submit or newline behavior
+        sendMessage();
+    }
 });
 
 socket.on('chat-message', (data) => {
@@ -63,7 +84,6 @@ socket.on('chat-message', (data) => {
     }
 
     try {
-        // Try to decrypt the incoming message using the password
         const bytes = CryptoJS.AES.decrypt(encryptedData, secretPassword);
         const decryptedText = bytes.toString(CryptoJS.enc.Utf8);
 
