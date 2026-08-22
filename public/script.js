@@ -5,6 +5,7 @@ const localVideo = document.getElementById('localVideo');
 const remoteVideo = document.getElementById('remoteVideo');
 
 let localStream;
+let cachedHistory = [];
 
 const servers = {
     iceServers: [
@@ -41,7 +42,10 @@ window.addEventListener('DOMContentLoaded', () => {
         if (savedUsername) usernameInput.value = savedUsername;
 
         const savedPassword = localStorage.getItem('webrtc_chat_password');
-        if (savedPassword) passwordInput.value = savedPassword;
+        if (savedPassword) {
+            passwordInput.value = savedPassword;
+            processHistory();
+        }
     } catch (e) {
         console.log('LocalStorage restricted.');
     }
@@ -56,6 +60,7 @@ usernameInput.addEventListener('input', () => {
 passwordInput.addEventListener('input', () => {
     try {
         localStorage.setItem('webrtc_chat_password', passwordInput.value.trim());
+        processHistory();
     } catch (e) {}
 });
 
@@ -90,10 +95,45 @@ messageInput.addEventListener('keydown', (event) => {
     }
 });
 
+socket.on('init-history', (history) => {
+    cachedHistory = history;
+    processHistory();
+});
+
 socket.on('chat-message', (data) => {
+    cachedHistory.push(data);
+    displayMessage(data);
+});
+
+function processHistory() {
+    messagesContainer.innerHTML = '';
+    const secretPassword = passwordInput.value.trim();
+
+    cachedHistory.forEach(data => {
+        const senderName = data.username || 'Anonymous';
+        if (!secretPassword) {
+            appendMessage(`${senderName}: [Encrypted Message - Enter password to read]`);
+            return;
+        }
+
+        try {
+            const bytes = CryptoJS.AES.decrypt(data.message, secretPassword);
+            const decryptedText = bytes.toString(CryptoJS.enc.Utf8);
+
+            if (decryptedText) {
+                appendMessage(`${senderName}: ${decryptedText}`);
+            } else {
+                appendMessage(`${senderName}: [Decryption Failed - Wrong Password]`);
+            }
+        } catch (e) {
+            appendMessage(`${senderName}: [Decryption Failed]`);
+        }
+    });
+}
+
+function displayMessage(data) {
     const secretPassword = passwordInput.value.trim();
     const senderName = data.username || 'Anonymous';
-    const encryptedData = data.message;
 
     if (!secretPassword) {
         appendMessage(`${senderName}: [Encrypted Message - Enter password to read]`);
@@ -101,7 +141,7 @@ socket.on('chat-message', (data) => {
     }
 
     try {
-        const bytes = CryptoJS.AES.decrypt(encryptedData, secretPassword);
+        const bytes = CryptoJS.AES.decrypt(data.message, secretPassword);
         const decryptedText = bytes.toString(CryptoJS.enc.Utf8);
 
         if (decryptedText) {
@@ -113,7 +153,7 @@ socket.on('chat-message', (data) => {
     } catch (e) {
         appendMessage(`${senderName}: [Decryption Failed]`);
     }
-});
+}
 
 function appendMessage(text) {
     const div = document.createElement('div');
