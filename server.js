@@ -26,16 +26,9 @@ app.get('/', (req, res) => {
 });
 
 io.on('connection', (socket) => {
-    let clientIp = socket.handshake.headers['x-forwarded-for'] || socket.conn.remoteAddress;
-    
-    if (clientIp === '::1' || clientIp === '::ffff:127.0.0.1') {
-        clientIp = '127.0.0.1';
-    } else if (clientIp && clientIp.includes(',')) {
-        clientIp = clientIp.split(',')[0].trim();
-    }
+    console.log(`User connected: ${socket.id}`);
 
-    console.log(`User connected: ${socket.id} from IP: ${clientIp}`);
-
+    // WebRTC Signaling
     socket.on('offer', (data) => {
         socket.broadcast.emit('offer', data);
     });
@@ -48,10 +41,11 @@ io.on('connection', (socket) => {
         socket.broadcast.emit('candidate', data);
     });
 
-    socket.on('chat-message', (encryptedData) => {
+    // Text Chat Messaging with Username packing
+    socket.on('chat-message', (data) => {
         socket.broadcast.emit('chat-message', {
-            ip: clientIp,
-            message: encryptedData
+            username: data.username || 'Anonymous',
+            message: data.message
         });
     });
 
