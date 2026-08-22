@@ -5,7 +5,6 @@ const localVideo = document.getElementById('localVideo');
 const remoteVideo = document.getElementById('remoteVideo');
 
 let localStream;
-let peerConnection;
 
 const servers = {
     iceServers: [
@@ -25,22 +24,55 @@ async function init() {
 
 init();
 
-// --- Text Chat Logic ---
+// --- Encrypted Text Chat Logic ---
+const passwordInput = document.getElementById('room-password');
 const messageInput = document.getElementById('message-input');
 const sendBtn = document.getElementById('send-btn');
 const messagesContainer = document.getElementById('messages');
 
 sendBtn.addEventListener('click', () => {
-    const message = messageInput.value;
-    if (message.trim() !== '') {
-        appendMessage('You: ' + message);
-        socket.emit('chat-message', message);
-        messageInput.value = '';
+    const text = messageInput.value;
+    const secretPassword = passwordInput.value;
+
+    if (text.trim() === '') return;
+
+    if (!secretPassword) {
+        alert('Please enter a shared password to encrypt your message!');
+        return;
     }
+
+    // Encrypt the message using AES
+    const encryptedMessage = CryptoJS.AES.encrypt(text, secretPassword).toString();
+
+    // Display locally as 'You'
+    appendMessage('You: ' + text);
+
+    // Send the encrypted cipher text across the server socket
+    socket.emit('chat-message', encryptedMessage);
+    messageInput.value = '';
 });
 
-socket.on('chat-message', (message) => {
-    appendMessage('Peer: ' + message);
+socket.on('chat-message', (encryptedData) => {
+    const secretPassword = passwordInput.value;
+
+    if (!secretPassword) {
+        appendMessage('Peer: [Encrypted Message - Enter password to read]');
+        return;
+    }
+
+    try {
+        // Try to decrypt the incoming message using the password
+        const bytes = CryptoJS.AES.decrypt(encryptedData, secretPassword);
+        const decryptedText = bytes.toString(CryptoJS.enc.Utf8);
+
+        if (decryptedText) {
+            appendMessage('Peer: ' + decryptedText);
+        } else {
+            appendMessage('Peer: [Decryption Failed - Wrong Password]');
+        }
+    } catch (e) {
+        appendMessage('Peer: [Decryption Failed]');
+    }
 });
 
 function appendMessage(text) {
