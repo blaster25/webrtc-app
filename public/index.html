@@ -23,9 +23,9 @@
     <div class="container">
         <h2>Secure Encrypted Chat</h2>
 
-        <!-- Password Input -->
+        <!-- Password Input hardened against mobile auto-correct -->
         <div class="input-group">
-            <input type="password" id="room-password" placeholder="Enter Shared Secret Password..." />
+            <input type="password" id="room-password" placeholder="Enter Shared Secret Password..." autocapitalize="none" autocomplete="off" spellcheck="false" />
         </div>
 
         <!-- Video Feeds -->
@@ -38,7 +38,7 @@
         <div id="chat-container">
             <div id="messages"></div>
             <div class="input-group">
-                <input type="text" id="message-input" placeholder="Type a secure message and press Enter..." />
+                <input type="text" id="message-input" placeholder="Type a secure message and press Enter..." autocapitalize="none" />
             </div>
             <button id="send-btn">Send Secure Message</button>
         </div>
