@@ -3,19 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebRTC Video & Chat App</title>
+    <title>Encrypted WebRTC Video & Chat App</title>
     <style>
         body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
         video { width: 40%; max-width: 400px; margin: 10px; background: black; border: 2px solid #ccc; border-radius: 8px; }
         #chat-container { max-width: 450px; margin: 20px auto; text-align: left; }
         #messages { height: 150px; border: 1px solid #ccc; overflow-y: scroll; padding: 10px; margin-bottom: 10px; background: #f9f9f9; border-radius: 5px; }
-        #message-input { width: 75%; padding: 8px; }
-        #send-btn { padding: 8px 15px; }
+        .input-group { margin-bottom: 8px; }
+        input { padding: 8px; box-sizing: border-box; }
+        #room-password, #message-input { width: 100%; }
+        #send-btn { padding: 8px 15px; width: 100%; }
     </style>
 </head>
 <body>
 
-    <h2>WebRTC Video Chat & Messaging</h2>
+    <h2>Secure Encrypted WebRTC Chat</h2>
+
+    <div class="input-group" style="max-width: 450px; margin: 0 auto 10px auto;">
+        <input type="password" id="room-password" placeholder="Enter Shared Secret Password..." />
+    </div>
 
     <div>
         <video id="localVideo" autoplay playsinline muted></video>
@@ -24,10 +30,14 @@
 
     <div id="chat-container">
         <div id="messages"></div>
-        <input type="text" id="message-input" placeholder="Type a message..." />
-        <button id="send-btn">Send</button>
+        <div class="input-group">
+            <input type="text" id="message-input" placeholder="Type an encrypted message..." />
+        </div>
+        <button id="send-btn">Send Secure Message</button>
     </div>
 
+    <!-- Include CryptoJS for AES encryption -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
     <!-- Include Socket.io client script -->
     <script src="/socket.io/socket.io.js"></script>
     <script src="script.js"></script>
